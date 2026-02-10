@@ -1,0 +1,7 @@
+Próximos passos
+
+-Criar OIDC Apps para Staging e Prod (plataformabet-ci-staging, plataformabet-ci-prod)
+-Criar grupos correspondentes (BET-Deploy-Staging, BET-Deploy-Prod)
+-Adicionar Claim groups para cada app
+-Integrar workflow GitHub Actions para pegar token OIDC diretamente
+-Adicionar approval step manual para deploy Prod
