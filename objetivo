@@ -1,0 +1,11 @@
+Objetivo
+
+Configurar autenticação e autorização de **pipelines de CI/CD** via **Okta OIDC**, usando **Client Credentials**, **scopes** e **claims de grupos**, garantindo:
+
+- Escalabilidade para múltiplos deploys/dia
+- Autorização clara por ambiente
+- Auditoria detalhada de deploys
+- Workflow **stateless**, sem necessidade de sessões humanas
+
+
+
