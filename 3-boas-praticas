@@ -1,0 +1,6 @@
+Boas práticas
+
+-Tokens curtos (5–10 min) para CI/CD pipelines
+-Stateless: serviços validam JWT sem chamar Okta a cada passo
+-Scope + groups definem autorização granular
+-Auditoria: logs devem registrar workflow, commit, identidade e grupo
