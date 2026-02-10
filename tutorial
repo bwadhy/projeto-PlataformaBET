@@ -1,0 +1,131 @@
+## 1. Arquitetura Conceitual
+GitHub Actions (workflow PlataformaBET)
+↓ OIDC
+Okta (Authorization Server)
+↓ JWT com groups + scope
+Cloud / API (valida token localmente)
+
+Componentes:
+
+| Componente | Função |
+|-----------|--------|
+| GitHub Actions Workflow | Roteiro do pipeline (build, test, deploy) |
+| OIDC App (plataformabet-ci-dev) | Representa identidade do pipeline DEV |
+| Authorization Server | Emite tokens stateless com scope e grupos |
+| Groups (BET-Deploy-Dev) | Define permissão real de deploy |
+| Claims `groups` | Incluído no token para autorização local |
+
+## 2. Passo a Passo - Configuração no Okta
+
+### 2.1 Criar Authorization Server
+
+1. Security → API → Authorization Servers → **Add Authorization Server**
+2. Configurações:
+
+| Campo | Valor |
+|-------|-------|
+| Name | `plataformabet-auth` |
+| Audience | `Teste` |
+| Issuer | Dynamic (Okta fornece) |
+| Signing Key Rotation | Automatic |
+| Metadata URI | fornecido pelo Okta |
+
+3. Salvar
+
+---
+
+### 2.2 Criar Scope
+
+1. Dentro do Authorization Server → **Scopes → Add Scope**
+2. Configuração:
+
+| Campo | Valor |
+|-------|-------|
+| Name | `deploy` |
+| User Consent | Implicit |
+| Block services from requesting this scope | ❌ desmarcado |
+| Save | ✔️ |
+
+---
+
+### 2.3 Criar OIDC App para pipeline DEV
+
+1. Applications → Create App Integration
+2. Configuração:
+
+| Campo | Valor |
+|-------|-------|
+| Sign-in method | OIDC |
+| Application type | API Services |
+| Name | `plataformabet-ci-dev` |
+| Save | ✔️ |
+
+---
+
+### 2.4 Autorizar App no Authorization Server
+
+1. Authorization Server → Access Policies → Add Policy
+2. Configuração Policy:
+
+| Campo | Valor |
+|-------|-------|
+| Name | `PlataformaBET CI Dev` |
+| Assign to | `plataformabet-ci-dev` |
+| Save | ✔️ |
+
+3. Adicionar Rule à Policy:
+
+| Campo | Valor |
+|-------|-------|
+| Name | `Dev Deploy Rule` |
+| Grant type | Client Credentials |
+| User is | Any user |
+| Scopes | `deploy` |
+| Access token lifetime | 5 min |
+| Save | ✔️ |
+
+---
+
+### 2.5 Criar Grupo de autorização
+
+1. Directory → Groups → Add Group
+2. Configuração:
+
+| Campo | Valor |
+|-------|-------|
+| Name | `BET-Deploy-Dev` |
+| Description | Permissão deploy DEV PlataformaBET |
+| Save | ✔️ |
+
+3. Associar App ao grupo:
+
+- Groups → BET-Deploy-Dev → Applications → Assign Applications → `plataformabet-ci-dev` → Assign
+
+---
+
+### 2.6 Criar Claim `groups` no Authorization Server
+
+1. Authorization Server → Claims → Add Claim
+2. Configuração:
+
+| Campo | Valor |
+|-------|-------|
+| Name | `groups` |
+| Include in token type | Access Token |
+| Value type | Groups |
+| Filter | Starts with `BET-` |
+| Include in | Any scope |
+| Always include | ✔️ |
+
+---
+
+### 2.7 Teste do token (Client Credentials)
+
+**Comando curl**:
+
+```bash
+curl -X POST https://<OKTA_DOMAIN>/oauth2/<AUTH_SERVER_ID>/v1/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -u CLIENT_ID:CLIENT_SECRET \
+  -d "grant_type=client_credentials" \
+  -d "scope=deploy"
